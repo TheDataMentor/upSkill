@@ -1,12 +1,15 @@
 from app import db
 from models import User
+from utils.helpers import cache_response, invalidate_cache, get_cache_key
 
 class UserService:
     @staticmethod
+    @cache_response(timeout=600)  # Cache for 10 minutes
     def get_user(user_id):
         return User.query.get(user_id)
 
     @staticmethod
+    @cache_response(timeout=300)  # Cache for 5 minutes
     def get_all_users():
         return User.query.all()
 
@@ -16,6 +19,7 @@ class UserService:
         user.set_password(data['password'])
         db.session.add(user)
         db.session.commit()
+        invalidate_cache(get_cache_key('users'))
         return user
 
     @staticmethod
@@ -27,6 +31,7 @@ class UserService:
             if 'password' in data:
                 user.set_password(data['password'])
             db.session.commit()
+            invalidate_cache(get_cache_key('users', user_id))
         return user
 
     @staticmethod
@@ -35,5 +40,6 @@ class UserService:
         if user:
             db.session.delete(user)
             db.session.commit()
+            invalidate_cache(get_cache_key('users', user_id))
             return True
         return False
