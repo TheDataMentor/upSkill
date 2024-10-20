@@ -11,4 +11,5 @@ dependencies = [
     "flask-redis>=0.4.0",
     "flask-restful>=0.3.10",
     "flask-limiter>=3.8.0",
+    "flask-migrate>=4.0.7",
 ]

@@ -5,6 +5,7 @@ from flask_restful import Api
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_redis import FlaskRedis
+from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from redis.exceptions import ConnectionError as RedisConnectionError
 
@@ -13,6 +14,7 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 redis_client = FlaskRedis()
+migrate = Migrate()
 
 # Create the Flask app
 app = Flask(__name__)
@@ -20,12 +22,9 @@ app = Flask(__name__)
 # Load configuration
 app.config.from_object('config.Config')
 
-# Ensure REDIS_URL is set
-app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-app.logger.info(f"Using Redis URL: {app.config['REDIS_URL']}")
-
 # Initialize extensions
 db.init_app(app)
+migrate.init_app(app, db)
 
 # Initialize Redis with error handling
 try:
@@ -62,11 +61,6 @@ api.add_resource(CourseListResource, '/api/courses')
 api.add_resource(CourseResource, '/api/courses/<int:course_id>')
 api.add_resource(SkillListResource, '/api/skills')
 api.add_resource(SkillResource, '/api/skills/<int:skill_id>')
-
-# Create database tables
-with app.app_context():
-    import models
-    db.create_all()
 
 @app.route('/')
 def index():

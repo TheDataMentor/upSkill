@@ -8,12 +8,14 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 10,
         "pool_recycle": 300,
         "pool_pre_ping": True,
+        "max_overflow": 15,
     }
     
     # Redis
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    REDIS_URL = os.environ.get('REDIS_URL')
     
     # Rate Limiting
     RATELIMIT_STORAGE_URL = REDIS_URL
