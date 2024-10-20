@@ -1,0 +1,41 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+test:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - python -m unittest discover tests
+
+build:
+  stage: build
+  image: node:16
+  before_script:
+    - apt-get update && apt-get install -y python3 python3-pip
+    - pip3 install -r requirements.txt
+    - cd frontend && npm install
+  script:
+    - cd frontend && npm run build
+    - cd .. && python3 -m flask db upgrade
+    - echo "Build completed successfully"
+
+deploy_to_replit:
+  stage: deploy
+  image: curlimages/curl
+  script:
+    - |
+      curl -X POST \
+           -H "Content-Type: application/json" \
+           -H "Accept: application/json" \
+           -H "Authorization: Bearer $REPLIT_API_KEY" \
+           -d "{\"gitRemote\": \"$CI_REPOSITORY_URL\", \"gitBranch\": \"$CI_COMMIT_REF_NAME\"}" \
+           https://replit.com/api/v1/repls/$REPLIT_REPL_ID/deployments
+  only:
+    - main

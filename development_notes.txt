@@ -124,8 +124,6 @@ AWS Infrastructure Next Steps:
     - Create and test a disaster recovery plan
     - Implement regular restore tests to ensure data integrity
 
-These next steps provide a comprehensive roadmap for implementing the AWS infrastructure for the UpSkill application. Each step should be carefully planned and executed, with thorough testing at each stage to ensure a smooth transition to the cloud environment.
-
 24. Deployment Failure Hypotheses and Resolution Steps
 
 Hypotheses for deployment failure:
@@ -174,3 +172,8 @@ Additional information to gather for troubleshooting:
 - Verify if all required environment variables and secrets are correctly set in the Kubernetes configuration
 
 By systematically going through these hypotheses and resolution steps, we can identify and address the root cause of any deployment failures, ensuring a smooth transition to the AWS infrastructure.
+
+25. Investigate alternatives for Replit API key:
+    - Research alternative deployment methods that don't require a Replit API key
+    - Explore options for obtaining a Replit API key for our account type
+    - Consider using a different CI/CD service if Replit API integration is not possible
