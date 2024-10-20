@@ -18,3 +18,9 @@ TODO List:
    - Verify rate limit headers are present and accurate in responses
    - Test fallback mechanism to in-memory rate limiting when Redis is unavailable
    - Ensure global rate limiting and burst limits are functioning as expected
+
+5. Verify and test the sophisticated rate-limiting system
+   - Ensure rate limits are applied correctly for all API endpoints
+   - Check that rate limit headers are present and accurate in responses
+   - Test the fallback mechanism to in-memory rate limiting when Redis is unavailable
+   - Verify that global rate limiting and burst limits are functioning as expected
