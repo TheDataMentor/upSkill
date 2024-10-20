@@ -125,3 +125,52 @@ AWS Infrastructure Next Steps:
     - Implement regular restore tests to ensure data integrity
 
 These next steps provide a comprehensive roadmap for implementing the AWS infrastructure for the UpSkill application. Each step should be carefully planned and executed, with thorough testing at each stage to ensure a smooth transition to the cloud environment.
+
+24. Deployment Failure Hypotheses and Resolution Steps
+
+Hypotheses for deployment failure:
+a. Misconfigured Kubernetes resources
+b. Issues with AWS services or permissions
+c. Application compatibility problems with the new environment
+d. Network or security group misconfiguration
+e. Resource constraints (CPU, memory, storage)
+
+Steps to resolve:
+
+1. Check Kubernetes logs:
+   - Use kubectl get pods to list all pods
+   - Use kubectl logs <pod-name> to check application logs
+   - Look for error messages or unexpected behavior
+
+2. Verify AWS service status:
+   - Check the AWS Status page for any ongoing issues
+   - Ensure all required AWS services (EKS, RDS, ElastiCache, etc.) are running correctly
+
+3. Review IAM permissions:
+   - Confirm that the IAM roles and policies are correctly set up
+   - Verify that the EKS cluster has the necessary permissions to access other AWS resources
+
+4. Validate Kubernetes configurations:
+   - Review and validate all Kubernetes YAML files (deployment, service, ingress, etc.)
+   - Ensure all environment variables and secrets are correctly defined
+
+5. Check resource allocation:
+   - Review the resource requests and limits in the Kubernetes deployment
+   - Ensure the EKS cluster has sufficient capacity to run all pods
+
+6. Verify network settings:
+   - Check VPC, subnet, and security group configurations
+   - Ensure that all necessary ports are open and routing is correct
+
+7. Test the application locally:
+   - Run the application in a local Kubernetes environment (e.g., minikube)
+   - Verify that all components work correctly before deploying to AWS
+
+Additional information to gather for troubleshooting:
+- Specific error messages or logs from the failed deployment
+- Identify which step of the deployment process is failing (e.g., building container image, pushing to registry, creating Kubernetes resources)
+- Check if any specific AWS services are not responding or showing errors
+- Review any recent changes to the application code or infrastructure configuration
+- Verify if all required environment variables and secrets are correctly set in the Kubernetes configuration
+
+By systematically going through these hypotheses and resolution steps, we can identify and address the root cause of any deployment failures, ensuring a smooth transition to the AWS infrastructure.

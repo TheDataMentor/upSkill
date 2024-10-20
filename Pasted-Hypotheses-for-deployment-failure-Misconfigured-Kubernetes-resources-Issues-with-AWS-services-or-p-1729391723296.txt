@@ -1,0 +1,39 @@
+Hypotheses for deployment failure:
+
+Misconfigured Kubernetes resources
+Issues with AWS services or permissions
+Application compatibility problems with the new environment
+Network or security group misconfiguration
+Resource constraints (CPU, memory, storage)
+Steps to resolve:
+
+Check Kubernetes logs:
+Use kubectl get pods to list all pods
+Use kubectl logs <pod-name> to check application logs
+Look for error messages or unexpected behavior
+Verify AWS service status:
+Check the AWS Status page for any ongoing issues
+Ensure all required AWS services (EKS, RDS, ElastiCache, etc.) are running correctly
+Review IAM permissions:
+Confirm that the IAM roles and policies are correctly set up
+Verify that the EKS cluster has the necessary permissions to access other AWS resources
+Validate Kubernetes configurations:
+Review and validate all Kubernetes YAML files (deployment, service, ingress, etc.)
+Ensure all environment variables and secrets are correctly defined
+Check resource allocation:
+Review the resource requests and limits in the Kubernetes deployment
+Ensure the EKS cluster has sufficient capacity to run all pods
+Verify network settings:
+Check VPC, subnet, and security group configurations
+Ensure that all necessary ports are open and routing is correct
+Test the application locally:
+Run the application in a local Kubernetes environment (e.g., minikube)
+Verify that all components work correctly before deploying to AWS
+Prompts for more information:
+
+Can you provide the specific error messages or logs from the failed deployment?
+Which step of the deployment process is failing (e.g., building container image, pushing to registry, creating Kubernetes resources)?
+Are there any specific AWS services that are not responding or showing errors?
+Have there been any recent changes to the application code or infrastructure configuration?
+Are all the required environment variables and secrets correctly set in the Kubernetes configuration?
+Please provide any relevant information about the deployment failure, and we can help you troubleshoot the specific issue.
