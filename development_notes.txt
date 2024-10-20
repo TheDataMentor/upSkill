@@ -2,3 +2,8 @@ TODO List:
 1. Update Redis URL for production deployment
    - Current development URL: redis://localhost:6379/0
    - Need to update to a production Redis URL when ready to deploy
+
+2. Test and verify rate-limiting functionality
+   - Ensure rate limits are applied correctly across all API endpoints
+   - Verify that rate limit headers are present in responses
+   - Test fallback to in-memory rate limiting when Redis is unavailable

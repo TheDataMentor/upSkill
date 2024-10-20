@@ -8,6 +8,8 @@ from sqlalchemy.orm import DeclarativeBase
 from redis.exceptions import ConnectionError as RedisConnectionError
 from utils.rate_limiter import RateLimiter
 import logging
+import threading
+import time
 
 class Base(DeclarativeBase):
     pass
@@ -72,5 +74,26 @@ def handle_internal_server_error(error):
     logger.error(f"Internal server error: {str(error)}")
     return jsonify({"error": "Internal server error"}), 500
 
+def check_redis_connection():
+    global redis_client
+    while True:
+        try:
+            if redis_client is None:
+                redis_client = FlaskRedis()
+                redis_client.init_app(app)
+            redis_client.ping()
+            if rate_limiter.redis_client is None:
+                rate_limiter.switch_to_redis(redis_client)
+            logger.info("Redis connection successful")
+        except RedisConnectionError as e:
+            logger.warning(f"Redis connection failed: {str(e)}. Switching to in-memory storage.")
+            redis_client = None
+            rate_limiter.switch_to_memory()
+        time.sleep(60)  # Check every 60 seconds
+
 if __name__ == '__main__':
+    # Start Redis connection check thread
+    redis_check_thread = threading.Thread(target=check_redis_connection, daemon=True)
+    redis_check_thread.start()
+
     app.run(host='0.0.0.0', port=5000)
