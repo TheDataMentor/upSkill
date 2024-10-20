@@ -1,6 +1,5 @@
-
 import os
-from flask import Flask, jsonify, render_template, request, make_response, send_from_directory, session
+from flask import Flask, jsonify, send_from_directory
 from flask_restful import Api
 from flask_migrate import Migrate
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -13,9 +12,15 @@ from utils.rate_limiter_init import init_rate_limiter, redis_client
 from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.profiler import ProfilerMiddleware
+from flask_caching import Cache
+from flask_compress import Compress
+from celery_worker import init_celery
 
 migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address)
+cache = Cache()
+compress = Compress()
 
 def create_app():
     app = Flask(__name__, static_folder='frontend/build')
@@ -30,6 +35,8 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    cache.init_app(app)
+    compress.init_app(app)
 
     # Initialize Redis and rate limiter
     init_rate_limiter(app)
@@ -40,6 +47,14 @@ def create_app():
 
     # Initialize Talisman for security headers
     Talisman(app, content_security_policy=app.config['CONTENT_SECURITY_POLICY'])
+
+    # Enable profiling in debug mode
+    if app.debug:
+        app.config['PROFILE'] = True
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+
+    # Initialize Celery
+    celery = init_celery(app)
 
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
@@ -60,22 +75,34 @@ def create_app():
         return jsonify({"error": "Internal server error"}), 500
 
     # Import and register API resources
-    from api.users import UserResource, UserListResource, UserCoursesResource, UserSkillsResource
-    from api.courses import CourseResource, CourseListResource
-    from api.skills import SkillResource, SkillListResource
-
-    api.add_resource(UserListResource, '/api/users')
-    api.add_resource(UserResource, '/api/users/<int:user_id>')
-    api.add_resource(UserCoursesResource, '/api/users/<int:user_id>/courses')
-    api.add_resource(UserSkillsResource, '/api/users/<int:user_id>/skills')
-    api.add_resource(CourseListResource, '/api/courses')
-    api.add_resource(CourseResource, '/api/courses/<int:course_id>')
-    api.add_resource(SkillListResource, '/api/skills')
-    api.add_resource(SkillResource, '/api/skills/<int:skill_id>')
+    with app.app_context():
+        from api import users, courses, skills
+        api.add_resource(users.UserListResource, '/api/users')
+        api.add_resource(users.UserResource, '/api/users/<int:user_id>')
+        api.add_resource(users.UserCoursesResource, '/api/users/<int:user_id>/courses')
+        api.add_resource(users.UserSkillsResource, '/api/users/<int:user_id>/skills')
+        api.add_resource(users.UsersWithCourseCountResource, '/api/users/course_count')
+        api.add_resource(courses.CourseListResource, '/api/courses')
+        api.add_resource(courses.CourseResource, '/api/courses/<int:course_id>')
+        api.add_resource(skills.SkillListResource, '/api/skills')
+        api.add_resource(skills.SkillResource, '/api/skills/<int:skill_id>')
 
     # Initialize auth
     from auth import init_auth
     init_auth(app)
+
+    @app.after_request
+    def add_header(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        return response
+
+    # Add a simple health check endpoint
+    @app.route('/health')
+    @cache.cached(timeout=60)  # Cache for 1 minute
+    def health_check():
+        return jsonify({"status": "healthy"}), 200
 
     return app
 

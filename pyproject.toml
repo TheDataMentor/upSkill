@@ -17,4 +17,8 @@ dependencies = [
     "flask-dance==6.2.0",
     "werkzeug==2.3.7",
     "flask-talisman>=1.1.0",
+    "flask-caching>=2.3.0",
+    "celery>=5.4.0",
+    "redis>=5.1.1",
+    "flask-compress>=1.17",
 ]

@@ -53,3 +53,8 @@ class Config:
         'frame-src': "'self'",
         'connect-src': "'self'"
     }
+
+    # Performance Optimization
+    SQLALCHEMY_POOL_TIMEOUT = 30
+    SQLALCHEMY_POOL_RECYCLE = 1800
+    SQLALCHEMY_MAX_OVERFLOW = 5
