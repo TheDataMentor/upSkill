@@ -1,0 +1,4 @@
+TODO List:
+1. Update Redis URL for production deployment
+   - Current development URL: redis://localhost:6379/0
+   - Need to update to a production Redis URL when ready to deploy
