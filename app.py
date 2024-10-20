@@ -20,6 +20,10 @@ app = Flask(__name__)
 # Load configuration
 app.config.from_object('config.Config')
 
+# Ensure REDIS_URL is set
+app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+app.logger.info(f"Using Redis URL: {app.config['REDIS_URL']}")
+
 # Initialize extensions
 db.init_app(app)
 
@@ -27,7 +31,7 @@ db.init_app(app)
 try:
     redis_client.init_app(app)
     redis_client.ping()  # Test the connection
-    app.logger.info("Redis connection successful")
+    app.logger.info(f"Redis connection successful: {app.config['REDIS_URL']}")
 except RedisConnectionError as e:
     app.logger.error(f"Redis connection failed: {str(e)}")
     redis_client = None
@@ -37,10 +41,7 @@ api = Api(app)
 
 # Initialize rate limiter with fallback strategy
 def limiter_key_func():
-    try:
-        return get_remote_address()
-    except:
-        return None
+    return get_remote_address()
 
 limiter = Limiter(
     key_func=limiter_key_func,
