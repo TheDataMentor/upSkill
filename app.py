@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, render_template, request, make_response
+from flask import Flask, jsonify, render_template, request, make_response, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_redis import FlaskRedis
@@ -7,7 +7,6 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from redis.exceptions import ConnectionError as RedisConnectionError
 from utils.rate_limiter import RateLimiter
-from utils.load_balancer import start_worker
 import logging
 import threading
 import time
@@ -20,7 +19,7 @@ redis_client = FlaskRedis()
 migrate = Migrate()
 
 # Create the Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='frontend/build')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -62,10 +61,13 @@ api.add_resource(CourseResource, '/api/courses/<int:course_id>')
 api.add_resource(SkillListResource, '/api/skills')
 api.add_resource(SkillResource, '/api/skills/<int:skill_id>')
 
-@app.route('/')
-@rate_limiter.limit("home", limit=100, period=60)
-def index():
-    return render_template('index.html')
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 @app.errorhandler(RedisConnectionError)
 def handle_redis_connection_error(error):
@@ -94,16 +96,9 @@ def check_redis_connection():
             rate_limiter.switch_to_memory()
         time.sleep(60)  # Check every 60 seconds
 
-def example_worker(task):
-    logger.info(f"Processing background task: {task}")
-    # Implement your background task processing logic here
-
 if __name__ == '__main__':
     # Start Redis connection check thread
     redis_check_thread = threading.Thread(target=check_redis_connection, daemon=True)
     redis_check_thread.start()
-
-    # Start worker thread for background tasks
-    worker_thread = start_worker(example_worker)
 
     app.run(host='0.0.0.0', port=5000)
