@@ -1,6 +1,6 @@
 from flask import request
 from flask_restful import Resource
-from app import rate_limiter
+from utils.rate_limiter_init import rate_limiter
 from services.course_service import CourseService
 
 class CourseResource(Resource):

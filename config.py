@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 class Config:
     # Flask
@@ -24,3 +25,31 @@ class Config:
     # Ensure all Redis-related configs use the same URL
     CACHE_REDIS_URL = REDIS_URL
     CACHE_TYPE = "redis"
+    
+    # OAuth Configuration
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+    
+    # GDPR Compliance
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+
+    # CSRF Protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or 'csrf_secret_key'
+
+    # Password Hashing
+    BCRYPT_LOG_ROUNDS = 12  # Increase the number of rounds for bcrypt
+
+    # Content Security Policy
+    CONTENT_SECURITY_POLICY = {
+        'default-src': "'self'",
+        'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
+        'style-src': "'self' 'unsafe-inline'",
+        'img-src': "'self' data:",
+        'font-src': "'self'",
+        'frame-src': "'self'",
+        'connect-src': "'self'"
+    }

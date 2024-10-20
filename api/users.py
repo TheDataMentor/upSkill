@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from app import rate_limiter
+from utils.rate_limiter_init import rate_limiter
 from services.user_service import UserService
 
 class UserResource(Resource):
