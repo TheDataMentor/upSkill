@@ -4,7 +4,7 @@ from app import rate_limiter
 from services.course_service import CourseService
 
 class CourseResource(Resource):
-    @rate_limiter.limit("course_get", limit=10, period=60)
+    @rate_limiter.limit("course_get", limit=15, period=60)
     def get(self, course_id):
         course = CourseService.get_course(course_id)
         if course:
@@ -26,7 +26,7 @@ class CourseResource(Resource):
         return {'message': 'Course not found'}, 404
 
 class CourseListResource(Resource):
-    @rate_limiter.limit("course_list_get", limit=20, period=60)
+    @rate_limiter.limit("course_list_get", limit=30, period=60)
     def get(self):
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)

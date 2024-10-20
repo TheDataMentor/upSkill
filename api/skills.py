@@ -4,7 +4,7 @@ from app import rate_limiter
 from services.skill_service import SkillService
 
 class SkillResource(Resource):
-    @rate_limiter.limit("skill_get", limit=10, period=60)
+    @rate_limiter.limit("skill_get", limit=15, period=60)
     def get(self, skill_id):
         skill = SkillService.get_skill(skill_id)
         if skill:
@@ -26,7 +26,7 @@ class SkillResource(Resource):
         return {'message': 'Skill not found'}, 404
 
 class SkillListResource(Resource):
-    @rate_limiter.limit("skill_list_get", limit=20, period=60)
+    @rate_limiter.limit("skill_list_get", limit=30, period=60)
     def get(self):
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)

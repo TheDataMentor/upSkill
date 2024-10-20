@@ -51,7 +51,7 @@ class UserListResource(Resource):
         return {'id': user.id, 'username': user.username, 'email': user.email}, 201
 
 class UserCoursesResource(Resource):
-    @rate_limiter.limit("user_courses_get", limit=10, period=60)
+    @rate_limiter.limit("user_courses_get", limit=15, period=60)
     def get(self, user_id):
         courses = UserService.get_user_courses(user_id)
         return {
@@ -59,7 +59,7 @@ class UserCoursesResource(Resource):
         }
 
 class UserSkillsResource(Resource):
-    @rate_limiter.limit("user_skills_get", limit=10, period=60)
+    @rate_limiter.limit("user_skills_get", limit=15, period=60)
     def get(self, user_id):
         skills = UserService.get_user_skills(user_id)
         return {
