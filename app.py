@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from redis.exceptions import ConnectionError as RedisConnectionError
 from utils.rate_limiter import RateLimiter
+from utils.load_balancer import start_worker
 import logging
 import threading
 import time
@@ -48,12 +49,14 @@ api = Api(app)
 rate_limiter = RateLimiter(redis_client)
 
 # Import and register API resources
-from api.users import UserResource, UserListResource
+from api.users import UserResource, UserListResource, UserCoursesResource, UserSkillsResource
 from api.courses import CourseResource, CourseListResource
 from api.skills import SkillResource, SkillListResource
 
 api.add_resource(UserListResource, '/api/users')
 api.add_resource(UserResource, '/api/users/<int:user_id>')
+api.add_resource(UserCoursesResource, '/api/users/<int:user_id>/courses')
+api.add_resource(UserSkillsResource, '/api/users/<int:user_id>/skills')
 api.add_resource(CourseListResource, '/api/courses')
 api.add_resource(CourseResource, '/api/courses/<int:course_id>')
 api.add_resource(SkillListResource, '/api/skills')
@@ -91,9 +94,16 @@ def check_redis_connection():
             rate_limiter.switch_to_memory()
         time.sleep(60)  # Check every 60 seconds
 
+def example_worker(task):
+    logger.info(f"Processing background task: {task}")
+    # Implement your background task processing logic here
+
 if __name__ == '__main__':
     # Start Redis connection check thread
     redis_check_thread = threading.Thread(target=check_redis_connection, daemon=True)
     redis_check_thread.start()
+
+    # Start worker thread for background tasks
+    worker_thread = start_worker(example_worker)
 
     app.run(host='0.0.0.0', port=5000)

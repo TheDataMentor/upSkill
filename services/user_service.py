@@ -1,7 +1,8 @@
-from app import db
+from app import db, redis_client
 from models import User, Course, Skill
 from sqlalchemy.orm import joinedload, contains_eager
 from utils.helpers import cache_response, invalidate_cache, get_cache_key
+import json
 
 class UserService:
     @staticmethod
@@ -22,10 +23,27 @@ class UserService:
 
     @staticmethod
     def get_user_with_courses_and_skills(user_id):
-        return User.query.options(
+        cache_key = f"user:{user_id}:full"
+        cached_data = redis_client.get(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
+
+        user = User.query.options(
             contains_eager(User.courses),
             contains_eager(User.skills)
         ).outerjoin(User.courses).outerjoin(User.skills).filter(User.id == user_id).first()
+
+        if user:
+            user_data = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'courses': [{'id': c.id, 'title': c.title} for c in user.courses],
+                'skills': [{'id': s.id, 'name': s.name, 'proficiency': s.proficiency} for s in user.skills]
+            }
+            redis_client.setex(cache_key, 600, json.dumps(user_data))  # Cache for 10 minutes
+            return user_data
+        return None
 
     @staticmethod
     def create_user(data):

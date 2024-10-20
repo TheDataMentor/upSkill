@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource
 from app import rate_limiter
 from services.user_service import UserService
@@ -8,13 +8,7 @@ class UserResource(Resource):
     def get(self, user_id):
         user = UserService.get_user_with_courses_and_skills(user_id)
         if user:
-            return {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'courses': [{'id': c.id, 'title': c.title} for c in user.courses],
-                'skills': [{'id': s.id, 'name': s.name, 'proficiency': s.proficiency} for s in user.skills]
-            }
+            return user
         return {'message': 'User not found'}, 404
 
     @rate_limiter.limit("user_put", limit=5, period=60)
