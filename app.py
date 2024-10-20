@@ -1,13 +1,13 @@
 import os
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_redis import FlaskRedis
 from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from redis.exceptions import ConnectionError as RedisConnectionError
+from utils.rate_limiter import RateLimiter
+import logging
 
 class Base(DeclarativeBase):
     pass
@@ -19,6 +19,10 @@ migrate = Migrate()
 # Create the Flask app
 app = Flask(__name__)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = app.logger
+
 # Load configuration
 app.config.from_object('config.Config')
 
@@ -29,26 +33,17 @@ migrate.init_app(app, db)
 # Initialize Redis with error handling
 try:
     redis_client.init_app(app)
-    redis_client.ping()  # Test the connection
-    app.logger.info(f"Redis connection successful: {app.config['REDIS_URL']}")
+    redis_client.ping()
+    logger.info(f"Redis connection successful: {app.config['REDIS_URL']}")
 except RedisConnectionError as e:
-    app.logger.error(f"Redis connection failed: {str(e)}")
+    logger.warning(f"Redis connection failed: {str(e)}. Falling back to in-memory storage.")
     redis_client = None
 
 # Initialize API
 api = Api(app)
 
-# Initialize rate limiter with fallback strategy
-def limiter_key_func():
-    return get_remote_address()
-
-limiter = Limiter(
-    key_func=limiter_key_func,
-    app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri=app.config['REDIS_URL'] if redis_client else "memory://",
-    strategy="moving-window"
-)
+# Initialize rate limiter
+rate_limiter = RateLimiter(redis_client)
 
 # Import and register API resources
 from api.users import UserResource, UserListResource
@@ -63,17 +58,18 @@ api.add_resource(SkillListResource, '/api/skills')
 api.add_resource(SkillResource, '/api/skills/<int:skill_id>')
 
 @app.route('/')
+@rate_limiter.limit("home", limit=100, period=60)
 def index():
     return render_template('index.html')
 
 @app.errorhandler(RedisConnectionError)
 def handle_redis_connection_error(error):
-    app.logger.error(f"Redis connection error: {str(error)}")
-    return jsonify({"error": "Service temporarily unavailable due to Redis connection issues"}), 503
+    logger.error(f"Redis connection error: {str(error)}")
+    return jsonify({"error": "Service temporarily using in-memory rate limiting due to Redis connection issues"}), 503
 
 @app.errorhandler(500)
 def handle_internal_server_error(error):
-    app.logger.error(f"Internal server error: {str(error)}")
+    logger.error(f"Internal server error: {str(error)}")
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':

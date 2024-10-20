@@ -1,10 +1,10 @@
 from flask import request
 from flask_restful import Resource
-from app import limiter
+from app import rate_limiter
 from services.user_service import UserService
 
 class UserResource(Resource):
-    @limiter.limit("10 per minute")
+    @rate_limiter.limit("user_get", limit=10, period=60)
     def get(self, user_id):
         user = UserService.get_user_with_courses_and_skills(user_id)
         if user:
@@ -17,7 +17,7 @@ class UserResource(Resource):
             }
         return {'message': 'User not found'}, 404
 
-    @limiter.limit("5 per minute")
+    @rate_limiter.limit("user_put", limit=5, period=60)
     def put(self, user_id):
         data = request.get_json()
         user = UserService.update_user(user_id, data)
@@ -25,14 +25,14 @@ class UserResource(Resource):
             return {'message': 'User updated successfully'}
         return {'message': 'User not found'}, 404
 
-    @limiter.limit("3 per minute")
+    @rate_limiter.limit("user_delete", limit=3, period=60)
     def delete(self, user_id):
         if UserService.delete_user(user_id):
             return {'message': 'User deleted successfully'}
         return {'message': 'User not found'}, 404
 
 class UserListResource(Resource):
-    @limiter.limit("20 per minute")
+    @rate_limiter.limit("user_list_get", limit=20, period=60)
     def get(self):
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
@@ -44,27 +44,23 @@ class UserListResource(Resource):
             'current_page': users_paginated.page
         }
 
-    @limiter.limit("5 per minute")
+    @rate_limiter.limit("user_list_post", limit=5, period=60)
     def post(self):
         data = request.get_json()
         user = UserService.create_user(data)
         return {'id': user.id, 'username': user.username, 'email': user.email}, 201
 
 class UserCoursesResource(Resource):
-    @limiter.limit("10 per minute")
+    @rate_limiter.limit("user_courses_get", limit=10, period=60)
     def get(self, user_id):
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
         courses = UserService.get_user_courses(user_id)
         return {
             'courses': [{'id': course.id, 'title': course.title, 'description': course.description} for course in courses]
         }
 
 class UserSkillsResource(Resource):
-    @limiter.limit("10 per minute")
+    @rate_limiter.limit("user_skills_get", limit=10, period=60)
     def get(self, user_id):
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
         skills = UserService.get_user_skills(user_id)
         return {
             'skills': [{'id': skill.id, 'name': skill.name, 'proficiency': skill.proficiency} for skill in skills]

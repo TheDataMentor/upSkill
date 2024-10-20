@@ -23,6 +23,10 @@ args = "Update Database Schema"
 task = "workflow.run"
 args = "Initialize Database"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Check Redis URL"
+
 [[workflows.workflow]]
 name = "Start Flask App"
 author = "agent"
@@ -56,6 +60,17 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "flask db init && flask db migrate -m 'Initial migration' && flask db upgrade"
+
+[[workflows.workflow]]
+name = "Check Redis URL"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python check_redis_url.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]
